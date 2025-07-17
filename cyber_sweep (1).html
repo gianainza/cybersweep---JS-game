@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Sweep</title>
+    <style>
+        :root {
+            --hacker-green: #0f0;
+            --dark-green: #0a0;
+            --matrix-green: #00ff41;
+            --cyber-red: #ff0038;
+            --cyber-blue: #00b4ff;
+            --terminal-bg: #0a0a12;
+            --glow-effect: 0 0 10px var(--hacker-green), 0 0 20px var(--dark-green);
+            --cyber-font: 'Courier New', 'Consolas', monospace;
+        }
+        
+        @font-face {
+            font-family: 'Digital';
+            src: url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        }
+        
+        body {
+            font-family: var(--cyber-font);
+            background-color: var(--terminal-bg);
+            color: var(--matrix-green);
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 65, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 56, 0.05) 0%, transparent 20%),
+                linear-gradient(to bottom, rgba(0, 11, 22, 0.9), rgba(0, 5, 15, 0.95));
+            overflow-x: hidden;
+        }
+        
+        h1 {
+            color: var(--cyber-red);
+            text-shadow: 0 0 5px var(--cyber-red), 0 0 15px var(--cyber-red);
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            position: relative;
+        }
+        
+        h1::after {
+            content: "█";
+            animation: blink 1s infinite;
+            margin-left: 5px;
+            color: var(--cyber-red);
+        }
+        
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: rgba(10, 10, 20, 0.8);
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: var(--glow-effect);
+            border: 1px solid var(--hacker-green);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            animation: scanline 3s linear infinite;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(20, 20, 30, 0.7);
+            border-radius: 5px;
+            box-shadow: 0 0 5px var(--hacker-green);
+            border: 1px solid var(--hacker-green);
+            position: relative;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 5px 10px;
+            background-color: rgba(0, 20, 10, 0.3);
+            border-radius: 3px;
+            border-left: 2px solid var(--hacker-green);
+        }
+        
+        .icon {
+            margin-right: 8px;
+            font-size: 20px;
+            cursor: help;
+            text-shadow: 0 0 5px currentColor;
+        }
+        
+        .tooltip {
+            visibility: hidden;
+            width: 150px;
+            background-color: rgba(10, 20, 30, 0.95);
+            color: var(--cyber-blue);
+            text-align: center;
+            border-radius: 3px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 150%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            border: 1px solid var(--cyber-blue);
+            box-shadow: 0 0 10px rgba(0, 180, 255, 0.5);
+        }
+        
+        .stat:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 3px;
+            margin: 0 auto;
+            width: fit-content;
+            padding: 10px;
+            background-color: rgba(0, 10, 20, 0.5);
+            border-radius: 5px;
+            border: 1px solid var(--cyber-blue);
+            box-shadow: inset 0 0 10px rgba(0, 180, 255, 0.3);
+        }
+        
+        .tile {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(30, 30, 40, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.2s;
+            user-select: none;
+            font-family: 'Share Tech Mono', monospace;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tile::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(0, 255, 65, 0.1) 0%,
+                transparent 50%,
+                rgba(0, 180, 255, 0.1) 100%
+            );
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .tile:hover {
+            background-color: rgba(50, 50, 70, 0.8);
+            box-shadow: 0 0 5px var(--hacker-green);
+        }
+        
+        .tile:hover::before {
+            opacity: 1;
+        }
+        
+        .tile.revealed {
+            background-color: rgba(10, 20, 30, 0.8);
+            cursor: default;
+            color: var(--cyber-blue);
+            border: 1px solid rgba(0, 180, 255, 0.3);
+        }
+        
+        .tile.flagged {
+            background-color: rgba(80, 0, 0, 0.7);
+            color: var(--cyber-red);
+            box-shadow: 0 0 8px var(--cyber-red);
+        }
+        
+        .tile.virus {
+            background-color: var(--cyber-red);
+            color: black;
+            animation: virusPulse 0.5s infinite alternate;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        button {
+            background-color: rgba(30, 30, 50, 0.8);
+            color: var(--hacker-green);
+            border: 1px solid var(--hacker-green);
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.3s;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                transparent,
+                transparent,
+                transparent,
+                var(--hacker-green),
+                transparent
+            );
+            transform: rotate(45deg);
+            transition: all 0.5s;
+        }
+        
+        button:hover {
+            background-color: var(--hacker-green);
+            color: black;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 15px var(--hacker-green);
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #555;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 5, 15, 0.9);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        
+        .modal-content {
+            background-color: rgba(10, 15, 25, 0.95);
+            padding: 30px;
+            border-radius: 5px;
+            max-width: 500px;
+            text-align: center;
+            border: 1px solid var(--cyber-blue);
+            box-shadow: 0 0 20px rgba(0, 180, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .modal-content::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--cyber-red), transparent);
+            animation: scanline 2s linear infinite;
+        }
+        
+        .difficulty-select {
+            margin-top: 20px;
+        }
+        
+        .difficulty-btn {
+            margin: 10px;
+            padding: 12px 25px;
+            display: block;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .powerup {
+            animation: pulse 1s infinite, glow 1.5s infinite alternate;
+        }
+        
+        .high-scores {
+            margin-top: 20px;
+            background-color: rgba(20, 25, 40, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid var(--cyber-blue);
+            box-shadow: 0 0 10px rgba(0, 180, 255, 0.3);
+        }
+        
+        .high-scores h3 {
+            margin-top: 0;
+            color: var(--cyber-blue);
+            text-shadow: 0 0 5px var(--cyber-blue);
+            font-family: 'Share Tech Mono', monospace;
+            border-bottom: 1px solid var(--cyber-blue);
+            padding-bottom: 5px;
+        }
+        
+        .high-scores table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .high-scores th {
+            background-color: rgba(0, 20, 40, 0.7);
+            color: var(--hacker-green);
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .high-scores td {
+            padding: 8px;
+            border-bottom: 1px solid rgba(0, 180, 255, 0.2);
+            color: var(--cyber-blue);
+        }
+        
+        .high-scores tr:hover {
+            background-color: rgba(0, 30, 60, 0.5);
+        }
+        
+        .timer {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            color: var(--cyber-blue);
+            font-family: 'Share Tech Mono', monospace;
+            text-shadow: 0 0 5px var(--cyber-blue);
+            letter-spacing: 1px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .okay-btn, .play-again-btn, .preview-btn {
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        .play-again-btn {
+            background-color: var(--cyber-blue);
+            border: none;
+            color: black;
+        }
+        
+        .play-again-btn:hover {
+            background-color: #00ccff;
+            color: white;
+            box-shadow: 0 0 15px var(--cyber-blue);
+        }
+        
+        .preview-btn {
+            background-color: var(--hacker-green);
+            border: none;
+            color: black;
+        }
+        
+        .preview-btn:hover {
+            background-color: #00ff00;
+            color: black;
+            box-shadow: 0 0 15px var(--hacker-green);
+        }
+        
+        .pause-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 5, 15, 0.85);
+            z-index: 5;
+            justify-content: center;
+            align-items: center;
+            color: var(--cyber-red);
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--cyber-red);
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 3px;
+            flex-direction: column;
+        }
+        
+        .pause-overlay::after {
+            content: "SYSTEM PAUSED";
+            font-size: 1rem;
+            color: var(--hacker-green);
+            margin-top: 20px;
+            text-shadow: 0 0 5px var(--hacker-green);
+            animation: blink 1.5s infinite;
+        }
+        
+        .game-area {
+            position: relative;
+        }
+        
+        .scan-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyber-blue), transparent);
+            animation: scanline 4s linear infinite;
+            opacity: 0.7;
+            z-index: 2;
+        }
+        
+        .binary-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        
+        .binary-digit {
+            position: absolute;
+            color: var(--hacker-green);
+            font-size: 14px;
+            animation: fall linear infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px var(--hacker-green); }
+            100% { box-shadow: 0 0 20px var(--hacker-green); }
+        }
+        
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(calc(100vh + 100%)); }
+        }
+        
+        @keyframes fall {
+            to { transform: translateY(100vh); }
+        }
+        
+        @keyframes virusPulse {
+            0% { box-shadow: 0 0 5px var(--cyber-red); }
+            100% { box-shadow: 0 0 20px var(--cyber-red); }
+        }
+        
+        .intro-text {
+            text-align: left;
+            margin-bottom: 20px;
+            border-left: 3px solid var(--hacker-green);
+            padding-left: 15px;
+            overflow: hidden;
+            white-space: nowrap;
+            animation: typing 3s steps(40, end);
+        }
+        
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        .cyber-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>CYBER SWEEP</h1>
+        <div class="timer" id="timer">Time: 00:00</div>
+        <div class="stats">
+            <div class="stat">
+                <span class="icon" title="Scans used">🔋</span>
+                <span id="scans">0</span>
+                <span class="tooltip">Number of tiles scanned - Each click counts as 1 scan.</span>
+            </div>
+            <div class="stat">
+                <span class="icon" title="Flags placed">🏴</span>
+                <span id="flags">0</span>
+                <span class="tooltip">Right-click to flag suspected viruses. Correct flags help you win!</span>
+            </div>
+            <div class="stat">
+                <span class="icon" title="Shields available">🛡️</span>
+                <span id="shields">0</span>
+                <span class="tooltip">Firewall Shield - Protects against 1 virus hit. Found randomly when scanning (max 5).</span>
+            </div>
+            <div class="stat">
+                <span class="icon" title="Deep scans available">🔍</span>
+                <span id="deep-scans">0</span>
+                <span class="tooltip">Deep Scan - Reveals 3x3 area (costs 3 scans). Found randomly or every 10 safe tiles (max 2).</span>
+            </div>
+        </div>
+        <div class="game-area">
+            <div class="board" id="board"></div>
+            <div class="pause-overlay" id="pause-overlay">PAUSED</div>
+        </div>
+        <div class="controls">
+            <button id="new-game">New Game</button>
+            <button id="pause-btn">Pause</button>
+            <button id="deep-scan-btn" disabled>Deep Scan (3)</button>
+        </div>
+        <div class="high-scores">
+            <h3>High Scores</h3>
+            <table id="high-scores-table">
+                <thead>
+                    <tr>
+                        <th>Difficulty</th>
+                        <th>Time</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="high-scores-body">
+                    <!-- High scores will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal" id="start-modal">
+        <div class="modal-content">
+            <h2>CYBER SWEEP</h2>
+            <p>You are a digital security agent scanning files for hidden viruses.</p>
+            <p>Scan files carefully - some contain viruses that will crash your system!</p>
+            <div class="difficulty-select">
+                <h3>Select Difficulty:</h3>
+                <button class="difficulty-btn" data-difficulty="easy">Easy (10x10, 10 viruses)</button>
+                <button class="difficulty-btn" data-difficulty="medium">Medium (12x12, 18 viruses)</button>
+                <button class="difficulty-btn" data-difficulty="hard">Hard (15x15, 28 viruses)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="end-modal">
+        <div class="modal-content">
+            <h2 id="result-title">YOU WIN</h2>
+            <p id="result-message"></p>
+            <p id="time-message"></p>
+            <p id="score-message"></p>
+            <div class="modal-buttons">
+                <button id="play-again" class="play-again-btn">Play Again</button>
+                <button id="preview-game" class="preview-btn">Preview Game</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="lose-modal">
+        <div class="modal-content">
+            <h2>YOU LOSE</h2>
+            <p id="lose-message">You hit a virus and your system crashed!</p>
+            <div class="modal-buttons">
+                <button id="lose-play-again" class="play-again-btn">Play Again</button>
+                <button id="lose-preview-game" class="preview-btn">Preview Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            board: [],
+            size: 10,
+            virusCount: 10,
+            scansUsed: 0,
+            scanLimit: 60,
+            flagsPlaced: 0,
+            shields: 0,
+            shieldsGranted: 0,
+            deepScans: 0,
+            deepScansGranted: 0,
+            revealedCount: 0,
+            gameOver: false,
+            difficulty: 'easy',
+            startTime: null,
+            endTime: null,
+            timerInterval: null,
+            isPaused: false,
+            pausedTime: 0,
+            accumulatedPauseTime: 0,
+            isPreviewMode: false
+        };
+
+        // Track first click
+        let isFirstClick = true;
+        let firstClickX = -1;
+        let firstClickY = -1;
+
+        // High scores
+        const highScores = {
+            easy: [],
+            medium: [],
+            hard: []
+        };
+
+        // Load high scores from localStorage
+        function loadHighScores() {
+            const savedScores = localStorage.getItem('virusScannerHighScores');
+            if (savedScores) {
+                Object.assign(highScores, JSON.parse(savedScores));
+            }
+            updateHighScoresDisplay();
+        }
+
+        // Save high scores to localStorage
+        function saveHighScores() {
+            localStorage.setItem('virusScannerHighScores', JSON.stringify(highScores));
+        }
+
+        // Add a high score
+        function addHighScore(time, score) {
+            const difficulty = gameState.difficulty;
+            highScores[difficulty].push({ time, score });
+            
+            highScores[difficulty].sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return a.time - b.time;
+            });
+            
+            if (highScores[difficulty].length > 5) {
+                highScores[difficulty] = highScores[difficulty].slice(0, 5);
+            }
+            
+            saveHighScores();
+            updateHighScoresDisplay();
+        }
+
+        // Update high scores display
+        function updateHighScoresDisplay() {
+            const tbody = document.getElementById('high-scores-body');
+            tbody.innerHTML = '';
+            
+            for (const difficulty in highScores) {
+                highScores[difficulty].forEach(score => {
+                    const row = document.createElement('tr');
+                    
+                    const diffCell = document.createElement('td');
+                    diffCell.textContent = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+                    row.appendChild(diffCell);
+                    
+                    const timeCell = document.createElement('td');
+                    timeCell.textContent = formatTime(score.time);
+                    row.appendChild(timeCell);
+                    
+                    const scoreCell = document.createElement('td');
+                    scoreCell.textContent = score.score;
+                    row.appendChild(scoreCell);
+                    
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        // Format time as MM:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // DOM elements
+        const boardElement = document.getElementById('board');
+        const scansElement = document.getElementById('scans');
+        const flagsElement = document.getElementById('flags');
+        const shieldsElement = document.getElementById('shields');
+        const deepScansElement = document.getElementById('deep-scans');
+        const newGameBtn = document.getElementById('new-game');
+        const pauseBtn = document.getElementById('pause-btn');
+        const deepScanBtn = document.getElementById('deep-scan-btn');
+        const startModal = document.getElementById('start-modal');
+        const endModal = document.getElementById('end-modal');
+        const loseModal = document.getElementById('lose-modal');
+        const resultTitle = document.getElementById('result-title');
+        const resultMessage = document.getElementById('result-message');
+        const timeMessage = document.getElementById('time-message');
+        const scoreMessage = document.getElementById('score-message');
+        const playAgainBtn = document.getElementById('play-again');
+        const previewGameBtn = document.getElementById('preview-game');
+        const losePlayAgainBtn = document.getElementById('lose-play-again');
+        const losePreviewGameBtn = document.getElementById('lose-preview-game');
+        const loseMessage = document.getElementById('lose-message');
+        const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+        const timerElement = document.getElementById('timer');
+        const pauseOverlay = document.getElementById('pause-overlay');
+
+        // Initialize game
+        function initGame() {
+            loadHighScores();
+            startModal.style.display = 'flex';
+            
+            difficultyBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const difficulty = btn.dataset.difficulty;
+                    gameState.difficulty = difficulty;
+                    
+                    switch(difficulty) {
+                        case 'easy':
+                            gameState.size = 10;
+                            gameState.virusCount = 10;
+                            gameState.scanLimit = 60;
+                            gameState.scansUsed = 0;
+                            break;
+                        case 'medium':
+                            gameState.size = 12;
+                            gameState.virusCount = 18;
+                            gameState.scanLimit = 80;
+                            gameState.scansUsed = 0;
+                            break;
+                        case 'hard':
+                            gameState.size = 15;
+                            gameState.virusCount = 28;
+                            gameState.scanLimit = 100;
+                            gameState.scansUsed = 0;
+                            break;
+                    }
+                    
+                    startModal.style.display = 'none';
+                    setupBoard();
+                });
+            });
+        }
+
+        // Set up the game board
+        function setupBoard() {
+            boardElement.innerHTML = '';
+            boardElement.style.gridTemplateColumns = `repeat(${gameState.size}, 1fr)`;
+            
+            isFirstClick = true;
+            firstClickX = -1;
+            firstClickY = -1;
+            gameState.board = [];
+            gameState.scansUsed = 0;
+            gameState.flagsPlaced = 0;
+            gameState.shields = 0;
+            gameState.shieldsGranted = 0;
+            gameState.deepScans = 0;
+            gameState.deepScansGranted = 0;
+            gameState.revealedCount = 0;
+            gameState.gameOver = false;
+            gameState.isPaused = false;
+            gameState.isPreviewMode = false;
+            gameState.accumulatedPauseTime = 0;
+            gameState.startTime = new Date();
+            
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            gameState.timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
+            
+            for (let i = 0; i < gameState.size; i++) {
+                gameState.board[i] = [];
+                for (let j = 0; j < gameState.size; j++) {
+                    gameState.board[i][j] = {
+                        isVirus: false,
+                        revealed: false,
+                        flagged: false,
+                        adjacentViruses: 0
+                    };
+                }
+            }
+            
+            for (let i = 0; i < gameState.size; i++) {
+                for (let j = 0; j < gameState.size; j++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.dataset.x = i;
+                    tile.dataset.y = j;
+                    
+                    tile.addEventListener('click', () => handleTileClick(i, j));
+                    tile.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        handleRightClick(i, j);
+                    });
+                    
+                    boardElement.appendChild(tile);
+                }
+            }
+            
+            updateUI();
+            pauseOverlay.style.display = 'none';
+            pauseBtn.textContent = 'Pause';
+        }
+
+        // Place viruses ensuring a safe zone around a given position
+        function placeViruses(excludeX, excludeY) {
+            let virusesPlaced = 0;
+            const safeZone = 1;
+            
+            while (virusesPlaced < gameState.virusCount) {
+                const x = Math.floor(Math.random() * gameState.size);
+                const y = Math.floor(Math.random() * gameState.size);
+                
+                if (excludeX !== -1 && excludeY !== -1 &&
+                    Math.abs(x - excludeX) <= safeZone && Math.abs(y - excludeY) <= safeZone) {
+                    continue;
+                }
+                
+                if (!gameState.board[x][y].isVirus) {
+                    gameState.board[x][y].isVirus = true;
+                    virusesPlaced++;
+                }
+            }
+            
+            for (let i = 0; i < gameState.size; i++) {
+                for (let j = 0; j < gameState.size; j++) {
+                    if (!gameState.board[i][j].isVirus) {
+                        gameState.board[i][j].adjacentViruses = countAdjacentViruses(i, j);
+                    }
+                }
+            }
+        }
+
+        // Toggle pause state
+        function togglePause() {
+            if (gameState.gameOver || gameState.isPreviewMode) return;
+            
+            gameState.isPaused = !gameState.isPaused;
+            
+            if (gameState.isPaused) {
+                clearInterval(gameState.timerInterval);
+                gameState.pausedTime = new Date();
+                pauseOverlay.style.display = 'flex';
+                pauseBtn.textContent = 'Resume';
+            } else {
+                gameState.accumulatedPauseTime += new Date() - gameState.pausedTime;
+                gameState.timerInterval = setInterval(updateTimer, 1000);
+                pauseOverlay.style.display = 'none';
+                pauseBtn.textContent = 'Pause';
+            }
+        }
+
+        // Update timer display
+        function updateTimer() {
+            if (gameState.startTime && !gameState.gameOver && !gameState.isPaused && !gameState.isPreviewMode) {
+                const now = new Date();
+                const elapsedMilliseconds = now - gameState.startTime - gameState.accumulatedPauseTime;
+                const elapsedSeconds = Math.floor(elapsedMilliseconds / 1000);
+                timerElement.textContent = `Time: ${formatTime(elapsedSeconds)}`;
+            }
+        }
+
+        // Count adjacent viruses for a tile
+        function countAdjacentViruses(x, y) {
+            let count = 0;
+            
+            for (let i = Math.max(0, x - 1); i <= Math.min(gameState.size - 1, x + 1); i++) {
+                for (let j = Math.max(0, y - 1); j <= Math.min(gameState.size - 1, y + 1); j++) {
+                    if (i === x && j === y) continue;
+                    if (gameState.board[i][j].isVirus) count++;
+                }
+            }
+            
+            return count;
+        }
+
+        // Helper function to reveal a tile
+        function revealTile(x, y, isSafeMode = false) {
+            const tile = gameState.board[x][y];
+            const tileElement = getTileElement(x, y);
+            
+            if (tile.revealed || tile.flagged) return;
+            
+            if (tile.isVirus && !isSafeMode) {
+                if (gameState.shields > 0) {
+                    gameState.shields--;
+                    tileElement.classList.add('powerup');
+                    tileElement.textContent = '🛡️';
+                    setTimeout(() => {
+                        tileElement.classList.remove('powerup');
+                        tileElement.textContent = '';
+                    }, 1000);
+                    return;
+                }
+                
+                tileElement.classList.add('virus');
+                tileElement.textContent = '💀';
+                gameState.gameOver = true;
+                gameState.endTime = new Date();
+                clearInterval(gameState.timerInterval);
+                loseModal.style.display = 'flex';
+                return;
+            }
+            
+            tile.revealed = true;
+            gameState.revealedCount++;
+            tileElement.classList.add('revealed');
+            
+            if (tile.adjacentViruses > 0) {
+                tileElement.textContent = tile.adjacentViruses;
+            } else {
+                tileElement.textContent = '';
+                revealAdjacentTiles(x, y);
+            }
+            
+            if (Math.random() < 0.1 && !tile.isVirus) {
+                if (gameState.shieldsGranted < 5 && gameState.deepScansGranted < 2 && Math.random() < 0.7) {
+                    gameState.shields++;
+                    gameState.shieldsGranted++;
+                    tileElement.classList.add('powerup');
+                    tileElement.textContent = '🛡️';
+                    setTimeout(() => {
+                        tileElement.textContent = tile.adjacentViruses > 0 ? tile.adjacentViruses : '';
+                    }, 1000);
+                } else if (gameState.deepScansGranted < 2) {
+                    gameState.deepScans++;
+                    gameState.deepScansGranted++;
+                    tileElement.classList.add('powerup');
+                    tileElement.textContent = '🔍';
+                    setTimeout(() => {
+                        tileElement.textContent = tile.adjacentViruses > 0 ? tile.adjacentViruses : '';
+                    }, 1000);
+                } else if (gameState.shieldsGranted < 5) {
+                    gameState.shields++;
+                    gameState.shieldsGranted++;
+                    tileElement.classList.add('powerup');
+                    tileElement.textContent = '🛡️';
+                    setTimeout(() => {
+                        tileElement.textContent = tile.adjacentViruses > 0 ? tile.adjacentViruses : '';
+                    }, 1000);
+                }
+            }
+            
+            if (gameState.revealedCount % 10 === 0 && gameState.deepScansGranted < 2) {
+                gameState.deepScans++;
+                gameState.deepScansGranted++;
+            }
+            
+            if (gameState.revealedCount === (gameState.size * gameState.size - gameState.virusCount)) {
+                gameState.gameOver = true;
+                gameState.endTime = new Date();
+                clearInterval(gameState.timerInterval);
+                showGameOver(true);
+            }
+        }
+
+        // Handle tile click
+        function handleTileClick(x, y) {
+            if (gameState.gameOver || gameState.isPaused || gameState.isPreviewMode) return;
+            
+            const tile = gameState.board[x][y];
+            const tileElement = getTileElement(x, y);
+            
+            if (tile.revealed || tile.flagged) return;
+            
+            if (isFirstClick) {
+                isFirstClick = false;
+                firstClickX = x;
+                firstClickY = y;
+                
+                placeViruses(x, y);
+                
+                for (let i = Math.max(0, x - 1); i <= Math.min(gameState.size - 1, x + 1); i++) {
+                    for (let j = Math.max(0, y - 1); j <= Math.min(gameState.size - 1, y + 1); j++) {
+                        if (!gameState.board[i][j].revealed && !gameState.board[i][j].flagged) {
+                            revealTile(i, j, true);
+                        }
+                    }
+                }
+                
+                updateUI();
+                return;
+            }
+            
+            gameState.scansUsed++;
+            revealTile(x, y);
+            updateUI();
+        }
+
+        // Handle right click (flagging)
+        function handleRightClick(x, y) {
+            if (gameState.gameOver || gameState.isPaused || gameState.isPreviewMode) return;
+            
+            const tile = gameState.board[x][y];
+            const tileElement = getTileElement(x, y);
+            
+            if (tile.revealed) return;
+            
+            if (tile.flagged) {
+                tile.flagged = false;
+                gameState.flagsPlaced--;
+                tileElement.classList.remove('flagged');
+                tileElement.textContent = '';
+            } else {
+                tile.flagged = true;
+                gameState.flagsPlaced++;
+                tileElement.classList.add('flagged');
+                tileElement.textContent = '🏴';
+            }
+            
+            updateUI();
+        }
+
+        // Reveal adjacent tiles (for empty tiles)
+        function revealAdjacentTiles(x, y) {
+            for (let i = Math.max(0, x - 1); i <= Math.min(gameState.size - 1, x + 1); i++) {
+                for (let j = Math.max(0, y - 1); j <= Math.min(gameState.size - 1, y + 1); j++) {
+                    if (i === x && j === y) continue;
+                    if (!gameState.board[i][j].revealed && !gameState.board[i][j].flagged) {
+                        revealTile(i, j);
+                    }
+                }
+            }
+        }
+
+        // Get tile DOM element
+        function getTileElement(x, y) {
+            return boardElement.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+        }
+
+        // Update UI elements
+        function updateUI() {
+            scansElement.textContent = gameState.scansUsed;
+            flagsElement.textContent = gameState.flagsPlaced;
+            shieldsElement.textContent = gameState.shields;
+            deepScansElement.textContent = gameState.deepScans;
+            
+            if (gameState.scansUsed >= gameState.scanLimit && !gameState.gameOver && !gameState.isPreviewMode) {
+                gameState.gameOver = true;
+                gameState.endTime = new Date();
+                clearInterval(gameState.timerInterval);
+                loseMessage.textContent = 'You ran out of scans and your system crashed!';
+                loseModal.style.display = 'flex';
+            }
+            
+            deepScanBtn.disabled = gameState.deepScans <= 0 || gameState.gameOver || gameState.isPaused || gameState.isPreviewMode;
+            pauseBtn.disabled = gameState.gameOver || gameState.isPreviewMode;
+            // New Game button remains enabled in all modes
+        }
+
+        // Reveal all viruses (for game over or preview)
+        function revealAllViruses() {
+            let newFlagCount = 0;
+
+            // Handle virus tiles and player-placed flags
+            for (let i = 0; i < gameState.size; i++) {
+                for (let j = 0; j < gameState.size; j++) {
+                    const tile = gameState.board[i][j];
+                    const tileElement = getTileElement(i, j);
+
+                    if (tile.isVirus) {
+                        // Clear any flags on virus tiles and show virus
+                        if (tile.flagged) {
+                            tile.flagged = false;
+                            gameState.flagsPlaced--;
+                        }
+                        tileElement.classList.remove('flagged');
+                        tileElement.classList.add('virus');
+                        tileElement.textContent = '💀';
+                    } else if (tile.flagged && !tile.revealed) {
+                        // Mark incorrect flags on non-virus tiles
+                        tileElement.classList.add('revealed');
+                        tileElement.textContent = '❌';
+                        newFlagCount++;
+                    }
+                }
+            }
+
+            // Update flag count to reflect only player-placed incorrect flags
+            gameState.flagsPlaced = newFlagCount;
+            updateUI();
+        }
+
+        // Enter preview mode
+        function enterPreviewMode() {
+            gameState.isPreviewMode = true;
+            gameState.gameOver = true;
+            revealAllViruses();
+            clearInterval(gameState.timerInterval);
+            updateUI();
+        }
+
+        // Show game over modal
+        function showGameOver(won) {
+            const elapsedMilliseconds = gameState.endTime - gameState.startTime - gameState.accumulatedPauseTime;
+            const elapsedSeconds = Math.floor(elapsedMilliseconds / 1000);
+            timeMessage.textContent = `Time: ${formatTime(elapsedSeconds)}`;
+            
+            if (won) {
+                const score = Math.floor(
+                    (gameState.size * gameState.size * 10) +
+                    ((gameState.scanLimit - gameState.scansUsed) * 5) +
+                    (gameState.flagsPlaced * 3) +
+                    (gameState.shields * 2) -
+                    (elapsedSeconds / 2)
+                );
+                
+                resultTitle.textContent = "YOU WIN";
+                resultMessage.textContent = `You successfully quarantined all ${gameState.virusCount} viruses with ${gameState.scanLimit - gameState.scansUsed} scans remaining!`;
+                scoreMessage.textContent = `Score: ${score}`;
+                
+                addHighScore(elapsedSeconds, score);
+                endModal.style.display = 'flex';
+            } else {
+                endModal.style.display = 'none';
+            }
+        }
+
+        // Deep scan functionality
+        function activateDeepScan() {
+            if (gameState.deepScans <= 0 || gameState.gameOver || gameState.isPaused || gameState.isPreviewMode) return;
+            
+            deepScanBtn.disabled = true;
+            alert("Click on a tile to perform a deep scan (3x3 area). Right-click to cancel.");
+            
+            const handleDeepScanClick = (e) => {
+                const x = parseInt(e.target.dataset.x);
+                const y = parseInt(e.target.dataset.y);
+                
+                if (isNaN(x) || isNaN(y)) return;
+                
+                if (x <= 0 || x >= gameState.size - 1 || y <= 0 || y >= gameState.size - 1) {
+                    alert("Deep scan cannot be used on edges!");
+                    return;
+                }
+                
+                for (let i = x - 1; i <= x + 1; i++) {
+                    for (let j = y - 1; j <= y + 1; j++) {
+                        if (gameState.board[i][j].flagged) {
+                            alert("Cannot deep scan near flagged tiles!");
+                            return;
+                        }
+                    }
+                }
+                
+                gameState.deepScans--;
+                gameState.scansUsed += 3;
+                
+                for (let i = x - 1; i <= x + 1; i++) {
+                    for (let j = y - 1; j <= y + 1; j++) {
+                        if (!gameState.board[i][j].revealed && !gameState.board[i][j].flagged) {
+                            revealTile(i, j, true);
+                        }
+                    }
+                }
+                
+                boardElement.removeEventListener('click', handleDeepScanClick);
+                boardElement.removeEventListener('contextmenu', handleDeepScanCancel);
+                updateUI();
+            };
+            
+            const handleDeepScanCancel = (e) => {
+                e.preventDefault();
+                boardElement.removeEventListener('click', handleDeepScanClick);
+                boardElement.removeEventListener('contextmenu', handleDeepScanCancel);
+                deepScanBtn.disabled = gameState.deepScans <= 0;
+            };
+            
+            boardElement.addEventListener('click', handleDeepScanClick);
+            boardElement.addEventListener('contextmenu', handleDeepScanCancel);
+        }
+
+        // Event listeners
+        newGameBtn.addEventListener('click', initGame);
+        playAgainBtn.addEventListener('click', () => {
+            endModal.style.display = 'none';
+            initGame();
+        });
+        previewGameBtn.addEventListener('click', () => {
+            endModal.style.display = 'none';
+            enterPreviewMode();
+        });
+        losePlayAgainBtn.addEventListener('click', () => {
+            loseModal.style.display = 'none';
+            initGame();
+        });
+        losePreviewGameBtn.addEventListener('click', () => {
+            loseModal.style.display = 'none';
+            enterPreviewMode();
+        });
+        deepScanBtn.addEventListener('click', activateDeepScan);
+        pauseBtn.addEventListener('click', togglePause);
+
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>
